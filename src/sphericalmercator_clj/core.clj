@@ -47,27 +47,17 @@
 
 
 
-;; this is a mess but since is a very literal port from dev seed's
-;; sphericalmercator.js we have to suffer some state mess.
-;; TODO, look into fixing this to use less state.
 (defn spherical-mercator [& [size]]
   (let [c (get @cache size)]
-
     ;; check to see if we already have a cache
     ;; if we don't build the four arrays that we need for
     (when (nil? c)
-      (swap! cache assoc size {})
-      (doseq [key [:Bc :Cc :Zc :Ac]]
-        (swap! cache assoc-in [size key] []))
-      (let [s (atom size)]
-        (doseq [i (range 30)]
-          (do
-            (swap! cache update-in [size :Bc] conj (/ @s 360.0))
-            (swap! cache update-in [size :Cc] conj (/ @s (* 2 Math/PI)))
-            (swap! cache update-in [size :Zc] conj (/ @s 2))
-            (swap! cache update-in [size :Ac] conj @s)
-            (swap! s * 2)))))
-
+      (swap! cache assoc size
+             (let [steps (take 30 (iterate (partial * 2) size))]
+               {:Bc (vec (map #(/ % 360.0) steps))
+                :Cc (vec (map #(/ % (* 2 Math/PI)) steps))
+                :Zc (vec (map #(/ % 2) steps))
+                :Ac (vec steps)})))
     (SphericalMercator.
      size
      (get-in @cache [size :Bc])
