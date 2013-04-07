@@ -34,8 +34,7 @@
     (let [zcZoom ((:Zc self) zoom)
           g  (/ (- (px 1) zcZoom)  (- ((:Cc self) zoom)))
           lon (/ (- (px 0) zcZoom) (- ((:Bc self) zoom)))
-          lat (* R2D (-  (* 2 (Math/atan (Math/exp g))) (* 0.5 Math/PI)))
-          ]
+          lat (* R2D (-  (* 2 (Math/atan (Math/exp g))) (* 0.5 Math/PI)))]
       [lon lat]))
 
   (xyz->bbox      [self x y zoom]
