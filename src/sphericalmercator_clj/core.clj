@@ -1,7 +1,11 @@
 (ns sphericalmercator-clj.core
   (:import [java.lang Math]))
+
 ;; this is a port of dev seeds sphericalmercator.js
 ;; https://github.com/mapbox/node-sphericalmercator
+
+;; its also take from openstreetmap's
+;; http://svn.openstreetmap.org/applications/rendering/mapnik/generate_tiles.py
 
 (def cache     (atom {}))
 (def EPSLN     1.0e-10)
@@ -45,6 +49,14 @@
       [(pixel->ll self lower-left zoom)
        (pixel->ll self upper-right zoom)])))
 
+(defn build-tileset [size]
+  (let [steps (take 30 (iterate (partial * 2) size))]
+    (SphericalMercator.
+     size
+     (vec (map #(/ % 360.0) steps))
+     (vec (map #(/ % (* 2 Math/PI)) steps))
+     (vec (map #(/ % 2) steps))
+     (vec steps))))
 
 
 (defn spherical-mercator [& [size]]
@@ -53,15 +65,5 @@
     ;; if we don't build the four arrays that we need for
     (when (nil? c)
       (swap! cache assoc size
-             (let [steps (take 30 (iterate (partial * 2) size))]
-               {:Bc (vec (map #(/ % 360.0) steps))
-                :Cc (vec (map #(/ % (* 2 Math/PI)) steps))
-                :Zc (vec (map #(/ % 2) steps))
-                :Ac (vec steps)})))
-    (SphericalMercator.
-     size
-     (get-in @cache [size :Bc])
-     (get-in @cache [size :Cc])
-     (get-in @cache [size :Zc])
-     (get-in @cache [size :Ac]))))
-
+             (build-tileset size)))
+    (@cache size)))
