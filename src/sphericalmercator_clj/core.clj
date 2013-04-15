@@ -36,12 +36,14 @@
                            (- ((:Cc self) zoom)))))]
       [(if (> x acZoom) acZoom x)
        (if (> y acZoom) acZoom y)]))
-  
+
   (pixel->ll [self px zoom]
     (let [zcZoom     ((:Zc self) zoom)
           g          (/ (- (px 1) zcZoom)  (- ((:Cc self) zoom)))
-          lon        (/ (- (px 0) zcZoom) (- ((:Bc self) zoom)))
+
+          lon        (/ (- (px 0) zcZoom) ((:Bc self) zoom))
           lat        (* R2D (-  (* 2 (Math/atan (Math/exp g))) (* 0.5 Math/PI)))]
+
       [lon lat]))
 
   ;; returns a vector with the following values
