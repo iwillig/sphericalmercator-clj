@@ -16,11 +16,20 @@
 (def A         6378137)
 (def MAXEXTENT 20037508.34)
 
+
+;; converts a lat long pair to the google projection, ie EPSG:900913
+(defn geographnic->google [[x y]]
+  (let  [x    (* A x D2R)
+         y    (* A (Math/log (Math/tan (+  (* Math/PI 0.25)
+                                        (* 0.5 y D2R)))))]
+    [x y]))
+
 (defprotocol Convertable
   "A protocol that encapsulates the methods we need to convert between pixel and latlong"
   (lonlat->pixel   [self ll zoom] "Converts a lon lat array to a screen pixel value")
   (pixel->ll       [self px zoom] "Converts screen pixel value to a lon lat")
   (xyz->bbox       [self x y zoom] "Converts xyz to a bounding box of [w s e n]"))
+
 
 (defrecord SphericalMercator [size Bc Cc Zc Ac]
   Convertable
@@ -50,12 +59,15 @@
   ;; [left bottom right top]
   (xyz->bbox      [self x y zoom]
     (let [size         (:size self)
-          y            (- (- (Math/pow 2 zoom) 1) y)
+;;          y            (- (- (Math/pow 2 zoom) 1) y)
           lower-left   [(* x size)  (* (+ y 1) size)]
           upper-right  [(* (+ x 1) size) (* y size)]]
 
-      (concat (pixel->ll self lower-left zoom)
-              (pixel->ll self upper-right zoom)))))
+      (concat (geographic->google (pixel->ll self lower-left zoom))
+              (geographic->google (pixel->ll self upper-right zoom))))))
+
+
+
 
 (defn build-tileset [size]
   (let [steps (take 30 (iterate (partial * 2) size))]
